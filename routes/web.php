@@ -21,22 +21,55 @@ Route::middleware(['auth'])->group(function () {
 Route::get('/auth/redirect', function () { return Socialite::driver('github')->redirect(); })->name('auth.github');
 
 Route::get('/auth/callback', function () {
-    $githubUser = Socialite::driver('github')->user();
- 
-    $user = User::updateOrCreate([
-        'github_id' => $githubUser->id,
-    ], [
-        'name' => $githubUser->name,
-        'email' => $githubUser->email,
-        'password' => Hash::make(Str::random(24)),
-        'github_token' => $githubUser->token,
-        'github_refresh_token' => $githubUser->refreshToken,
-    ]);
- 
-    Auth::login($user);
- 
-    return redirect('/home');
-});
+    try {
+            $githubUser = Socialite::driver('github')->user();
+
+            $user = User::where('github_id', $githubUser->getId())->first();
+
+            if (!$user) {
+                $user = User::where('email', $githubUser->getEmail())->first();
+                if ($user) {
+                    $user->update([
+                        'github_id' => $githubUser->getId(),
+                        'github_token' => $githubUser->token,
+                        'github_refresh_token' => $githubUser->refreshToken,
+                        'github_token_expires_at' => now()->addHours(6),
+                    ]);
+                }
+            }
+
+            if (!$user) {
+                $user = User::create([
+                    'name' => $githubUser->getName() ?? $githubUser->getNickname(),
+                    'email' => $githubUser->getEmail(),
+                    'password' => bcrypt(Str::random(24)),
+                    'github_id' => $githubUser->getId(),
+                    'github_token' => $githubUser->token,
+                    'github_refresh_token' => $githubUser->refreshToken,
+                    'github_token_expires_at' => now()->addHours(6),
+                ]);
+            }
+
+            Auth::login($user, true);
+
+            Log::info('GitHub 登录成功', [
+                'user_id' => $user->id,
+                'email' => $user->email
+            ]);
+
+            return redirect('/home')
+                ->with('success', 'GitHub 登录成功！');
+
+        } catch (Exception $e) {
+            Log::error('GitHub 登录失败', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return redirect()->route('login')
+                ->with('error', 'GitHub 登录失败，请重试');
+        }
+    });
 
 Route::middleware(['auth', 'verified'])->group(function () {
 
