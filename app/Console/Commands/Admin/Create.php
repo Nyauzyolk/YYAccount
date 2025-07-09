@@ -28,16 +28,16 @@ class Create extends Command
     public function handle(): int
     {
         // 名称
-        $name = $this->ask('Please enter the username.');
+        $name = $this->ask('Please enter the username');
 
         // 邮箱
-        $email = $this->ask('Please enter the e-mail.');
+        $email = $this->ask('Please enter the e-mail');
 
         // 密码
-        $password = $this->secret('Please enter the password.');
+        $password = $this->secret('Please enter the password');
         
         // 确认密码
-        $password_confirmation = $this->secret('Please confirm the password.');
+        $password_confirmation = $this->secret('Please confirm the password');
 
         // 验证密码
         if ($password !== $password_confirmation) {
@@ -54,7 +54,7 @@ class Create extends Command
         ]);
 
         // 输出信息
-        $this->info('Admin created successfully with ID: '.$admin->id.'。');
+        $this->info('Admin created successfully with ID: '.$admin->id.'.');
 
         return CommandAlias::SUCCESS;
     }
