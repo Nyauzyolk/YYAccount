@@ -48,7 +48,7 @@ class Delete extends Command
         ]);
 
         // 确认
-        if (! $this->confirm('确认删除管理员吗？')) {
+        if (! $this->confirm('Are you confirm to delete the admin？')) {
             return CommandAlias::FAILURE;
         }
 
@@ -56,7 +56,7 @@ class Delete extends Command
         Admin::destroy($id);
 
         // 输出信息
-        $this->info('管理员删除成功。');
+        $this->info('Admin deleted successfully');
 
         return CommandAlias::SUCCESS;
     }
